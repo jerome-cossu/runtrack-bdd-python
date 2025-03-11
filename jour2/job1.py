@@ -18,16 +18,16 @@ if connexion.is_connected():
 else:
     print("Erreur de connexion")
 
-curseur = connexion.cursor()
+cursor = connexion.cursor()
 
 requete = "select * from etudiant"
-curseur.execute(requete)
+cursor.execute(requete)
 
-students = curseur.fetchall()
+students = cursor.fetchall()
 
 print("Liste des étudiants :")
 for student in students:
     print(student)
 
-curseur.close()
+cursor.close()
 connexion.close()
