@@ -1,33 +1,32 @@
 import mysql.connector
+import os   
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
 mot_de_passe = os.getenv("MOT_DE_PASSE")
 
 connexion = mysql.connector.connect(
-    host="127.0.0.1",
-    user="root",
-    password=mot_de_passe,
-    database="laplateforme"
+    host = "127.0.0.1",
+    user = "root",
+    password = mot_de_passe,
+    database = "LaPlateforme"
 )
 
 if connexion.is_connected():
-    print("Connecté à la base de données")
-else:
-    print("Erreur de connexion")
+    print("La connexion a la base de données est établie")
 
-cursor = connexion.cursor()
+    cursor = connexion.cursor()
 
-requete = "select * from etudiant"
-cursor.execute(requete)
+    cursor.execute("select * from etudiant")
 
-students = cursor.fetchall()
+    resultat = cursor.fetchall()
+    for row in resultat:
+        print(row)
 
-print("Liste des étudiants :")
-for student in students:
-    print(student)
+else : 
+    print("La connexion a la base de données a échoué")
 
 cursor.close()
 connexion.close()
+

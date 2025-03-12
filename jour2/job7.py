@@ -3,87 +3,66 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
+mot_de_passe = os.getenv('MOT_DE_PASSE')
 
 class Employe:
-    def __init__(self, id=None, nom=None, prenom=None, salaire=None, id_service=None):
-        self.id = id
-        self.nom = nom
-        self.prenom = prenom
-        self.salaire = salaire
-        self.id_service = id_service
-    
-    def connect():
-        mot_de_passe = os.getenv("MOT_DE_PASSE")
-        return mysql.connector.connect(
-            host="127.0.0.1",
-    user="root",
-    password=mot_de_passe,
-    database="LaPlateforme"
+    def __init__(self, host, user, password, database):
+        self.connexion = mysql.connector.connect(
+            host = host,
+            user = user,
+            password = password,
+            database = database
         )
+        self.curseur = self.connexion.cursor()
     
-    def create(self):
-        connection = Employe.connect()
-        cursor = connection.cursor()
-        query = "UPDATE employe SET nom = %s, prenom = %s, salaire = %s, id_service = %s WHERE id = %s"
-        cursor.execute(query, (self.nom, self.prenom, self.salaire, self.id_service, self.id))
-        connection.commit()
-        cursor.close()
-        connection.close()
+    def ajouter_employe(self, nom, prenom, salaire, id_service):
+        requete = "insert into employe (nom, prenom, salaire, id_service) values (%s, %s, %s, %s)"
+        values = (nom, prenom, salaire, id_service)
+        self.curseur.execute(requete, values)
+        self.connexion.commit()
+        print(f"Employé {nom} {prenom} ajouté avec succès")
 
-    def read_all():
-        connection = Employe.connect()
-        cursor = connection.cursor()
-        query = "SELECT e.id, e.nom, e.prenom, e.salaire, s.nom AS service FROM employe e JOIN service s ON e.id_service = s.id"
-        cursor.execute(query)
-        results = cursor.fetchall()
-        for row in results:
-            print(f"ID: {row[0]}, Nom: {row[1]}, Prénom: {row[2]}, Salaire: {row[3]}, Service: {row[4]}")
-        cursor.close()
-        connection.close()
+    def afficher_employes(self):
+        requete = "select * from employe"
+        self.curseur.execute(requete)
+        resultat = self.curseur.fetchall()
+        for row in resultat:
+            print(row)
     
-    def read_high_salary():
-        connection = Employe.connect()
-        cursor = connection.cursor()
-        query = "SELECT * FROM employe WHERE salaire > 3000"
-        cursor.execute(query)
-        results = cursor.fetchall()
-        for row in results:
-            print(f"ID: {row[0]}, Nom: {row[1]}, Prénom: {row[2]}, Salaire: {row[3]}, ID Service: {row[4]}")
-        cursor.close()
-        connection.close()
-
-    def update(self):
-        connection = Employe.connect()
-        cursor = connection.cursor()
-        query = "UPDATE employe SET nom = %s, prenom = %s, salaire = %s, id_service = %s WHERE id = %s"
-        cursor.execute(query, (self.nom, self.prenom, self.salaire, self.id_service, self.id))
-        connection.commit()
-        cursor.close()
-        connection.close()
-
-    def delete(self):
-        connection = Employe.connect()
-        cursor = connection.cursor()
-        query = "DELETE FROM employe WHERE id = %s"
-        cursor.execute(query, (self.id,))
-        connection.commit()
-        cursor.close()
-        connection.close()
+    def afficher_employes_salaire(self, salaire_min):
+        requete = "select * from employe where salaire >= %s"
+        values = (salaire_min,)
+        self.curseur.execute(requete, values)
+        resultat = self.curseur.fetchall()
+        for row in resultat:
+            print(row)
     
-emp = Employe(nom="Doe", prenom="John", salaire=4000, id_service=1)
-emp.create()
+    def mettre_a_jour_salaire(self, id_employe, nouveau_salaire):
+        requete = "update employe set salaire = %s where id = %s"
+        values = (nouveau_salaire, id_employe)
+        self.curseur.execute(requete, values)
+        self.connexion.commit()
+        print(f"Salaire de l'employé {id_employe} est mis à jour avec succès")
+    
+    def supprimer_employe(self, id_employe):
+        requete = "delete from employe where id = %s"
+        self.curseur.execute(requete, (id_employe,))
+        self.connexion.commit()
+        print(f"Employé {id_employe} supprimé avec succès")
 
-print("Liste des employés :")
-Employe.read_all()
+    def fermer_connexion(self):
+        self.curseur.close()
+        self.connexion.close()
 
-print("\nListe des employés gagnant plus de 3000€ :")
-Employe.read_high_salary()
+if __name__ == '__main__':
+    db = Employe(host = "127.0.0.1", user = "root", password = mot_de_passe, database="entreprise")
+    db.ajouter_employe("Vador", "Dark", 4000, 1)
 
-emp.id = 1
-emp.nom = "Doe"
-emp.prenom = "John"
-emp.salaire = 3600
-emp.update()
+    print("Affichage des employés") 
+    db.afficher_employes()
 
-emp_to_delete = Employe(id=2)
-emp_to_delete.delete()
+    print("\nEmployes avec un salaire supérieur à 3000 € :")
+    db.afficher_employes_salaire(3000)
+    db.mettre_a_jour_salaire(1, 3800.00)
+    db.supprimer_employe(2)
+    db.fermer_connexion()

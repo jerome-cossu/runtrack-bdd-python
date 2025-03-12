@@ -1,30 +1,28 @@
 import mysql.connector
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
 load_dotenv()
-
 mot_de_passe = os.getenv("MOT_DE_PASSE")
 
-conn = mysql.connector.connect(
-    host="127.0.0.1",
-    user="root",
-    password=mot_de_passe,
-    database="LaPlateforme"
+connexion = mysql.connector.connect(
+    host = "127.0.0.1",
+    user = "root",
+    password = mot_de_passe,
+    database = "LaPlateforme"
 )
 
-if conn.is_connected():
-    print("Connecté à la base de données")
+if connexion.is_connected():
+    print("La connexion à la base de données est établie")
 
-cursor = conn.cursor()
+    cursor = connexion.cursor()
+    requete = "select sum(superficie) from etage"
+    cursor.execute(requete)
 
-cursor.execute("select sum(superficie) from etage")
+    resultat = cursor.fetchone()
 
-superficie = cursor.fetchone()
-
-superficie_totale = superficie[0]
-
-print (f"La superficie de La Plateforme est de {superficie_totale} m²")
+    if resultat[0]:
+        print(f"La superficie de LaPlateforme est de {resultat[0]} m²")
 
 cursor.close()
-conn.close
+connexion.close()
